@@ -58,3 +58,67 @@ HOST=127.0.0.1 PORT=3000 python app.py
 | DEBUG    | False   | Debug mode       |
 
 ```
+
+
+Окей, добавляем ровно то, **что от тебя хотят по лабе**, без воды и с объяснениями. Ниже — **готовый Docker-раздел**, который ты просто **вставляешь в `README.md`** (обычно после `Running the Application`).
+
+---
+
+## Docker
+
+This application can be run inside a Docker container.
+The Docker image is built following Docker best practices: minimal base image, non-root user, optimized layer caching, and a clean build context.
+
+### Dockerfile Overview
+
+The Dockerfile is designed for production usage and includes the following decisions:
+
+* **Base image**: `python:3.13-slim`
+  Chosen for a balance between small image size and good compatibility with Python packages.
+
+* **Non-root user**:
+  The application runs as a dedicated non-root user to reduce security risks.
+
+* **Optimized layer caching**:
+  Dependencies are installed before copying application code, allowing Docker to reuse cached layers when only source code changes.
+
+* **Minimal file copy**:
+  Only required source files are copied into the image to keep it small and clean.
+
+* **`.dockerignore` usage**:
+  Excludes development artifacts, virtual environments, VCS files, and caches to reduce build context size and improve build performance.
+
+---
+
+### Build the Docker Image
+
+```bash
+docker build -t devops-info-service .
+```
+
+---
+
+### Run the Container
+
+```bash
+docker run -p 8000:8000 devops-info-service
+```
+
+The application will be available at:
+
+```
+http://localhost:8000
+```
+
+---
+
+### Environment Variables in Docker
+
+You can override configuration values using environment variables:
+
+```bash
+docker run -p 8000:8000 \
+  -e HOST=0.0.0.0 \
+  -e PORT=8000 \
+  devops-info-service
+```
