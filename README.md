@@ -1,4 +1,4 @@
-![CI](https://github.com/<your-username>/<your-repo>/actions/workflows/python-ci.yml/badge.svg)
+![CI](https://github.com/essence-666/DevOps-Core-Course/actions/workflows/python-ci.yml/badge.svg)
 
 
 # DevOps Engineering: Core Practices
