@@ -1,3 +1,6 @@
+![CI](https://github.com/<your-username>/<your-repo>/actions/workflows/python-ci.yml/badge.svg)
+
+
 # DevOps Engineering: Core Practices
 
 [![Labs](https://img.shields.io/badge/Labs-18-blue)](#labs)
