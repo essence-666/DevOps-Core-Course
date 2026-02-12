@@ -2,12 +2,12 @@ name: Python CI - DevOps Info Service
 
 on:
   push:
-    branches: [ "main", "lab*" ]
+    branches: [ "**" ]
     tags:
       - "v*.*.*"
-    # paths:
-    #   - "app_python/**"
-    #   - ".github/workflows/python-ci.yml"
+    paths:
+      - "app_python/**"
+      - ".github/workflows/python-ci.yml"
 
   pull_request:
     branches: [ "main" ]
