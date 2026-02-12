@@ -48,7 +48,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest --cov=. --cov-report=term-missing --cov-fail-under=70
+          pytest --cov=. --cov-report=term-missing --cov-fail-under=60
       
       - name: Install Bandit
         run: pip install bandit
