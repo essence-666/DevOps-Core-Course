@@ -239,3 +239,5 @@ If any step fails — the pipeline fails.
 This lab demonstrates implementation of a production-like CI pipeline for a Python web application.
 
 The project integrates testing, linting, security scanning, and container validation to ensure code reliability, security, and maintainability.
+
+[The docker images with release by tag 1.0.0 1.0.1 etc](https://hub.docker.com/repository/docker/essence666/devops-info-service/general)
