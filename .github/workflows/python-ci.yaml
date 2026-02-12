@@ -2,9 +2,12 @@ name: Python CI - DevOps Info Service
 
 on:
   push:
+    branches: [ "main", "lab*" ]
     tags:
       - "v*.*.*"
-
+    paths:
+      - "app_python/**"
+      - ".github/workflows/python-ci.yml"
 
   pull_request:
     branches: [ "main" ]
@@ -80,5 +83,4 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-info-service:${{ steps.vars.outputs.VERSION }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/devops-info-service:${{ steps.vars.outputs.VERSION%%.* }}.${{ steps.vars.outputs.VERSION#*. }}
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-info-service:latest
