@@ -5,9 +5,9 @@ on:
     branches: [ "main", "lab*" ]
     tags:
       - "v*.*.*"
-    paths:
-      - "app_python/**"
-      - ".github/workflows/python-ci.yml"
+    # paths:
+    #   - "app_python/**"
+    #   - ".github/workflows/python-ci.yml"
 
   pull_request:
     branches: [ "main" ]
