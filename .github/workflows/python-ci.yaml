@@ -2,7 +2,7 @@ name: Python CI - DevOps Info Service
 
 on:
   push:
-    branches: [ "main", "lab*" ]
+    branches: [ "main", "**" ]
     tags:
       - "v*.*.*"
     paths:
