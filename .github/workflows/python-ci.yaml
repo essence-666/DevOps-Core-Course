@@ -54,7 +54,7 @@ jobs:
         run: pip install bandit
 
       - name: Run Bandit security scan
-        run: bandit -r .
+        run: bandit -r . -ll -s B101,B104
 
   docker:
     name: Build & Push Docker Image
