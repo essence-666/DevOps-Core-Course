@@ -3,6 +3,11 @@
 # Docker Installation
 # =========================
 - name: Install Docker
+  become: true
+  tags:
+    - docker
+    - docker_install
+
   block:
 
     - name: Add Docker GPG key
@@ -19,7 +24,7 @@
       ansible.builtin.apt:
         name: "{{ docker_packages }}"
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Install python docker module
       ansible.builtin.apt:
@@ -34,7 +39,7 @@
 
     - name: Retry apt update
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
 
     - name: Retry Docker packages install
       ansible.builtin.apt:
@@ -46,18 +51,16 @@
     - name: Ensure Docker service is enabled
       ansible.builtin.systemd:
         name: docker
-        enabled: yes
-
-  become: true
-  tags:
-    - docker
-    - docker_install
-
+        enabled: true
 
 # =========================
 # Docker Configuration
 # =========================
 - name: Configure Docker
+  become: true
+  tags:
+    - docker
+    - docker_config
   block:
 
     - name: Ensure Docker is running
@@ -69,9 +72,4 @@
       ansible.builtin.user:
         name: "{{ docker_user }}"
         groups: docker
-        append: yes
-
-  become: true
-  tags:
-    - docker
-    - docker_config
+        append: true

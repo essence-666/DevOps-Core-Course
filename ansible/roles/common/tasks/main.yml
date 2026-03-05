@@ -1,10 +1,14 @@
 ---
 - name: Install and configure common packages
+  become: true
+  tags:
+    - packages
+
   block:
 
     - name: Update apt cache
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
         cache_valid_time: 3600
 
     - name: Install common packages
@@ -13,14 +17,15 @@
         state: present
 
     - name: Set timezone
-      ansible.builtin.timezone:
-        name: "{{ timezone }}"
+      community.general.timezone:
+        name: "{{ common_timezone }}"
 
   rescue:
 
     - name: Fix apt cache and retry
-      ansible.builtin.command: apt-get update --fix-missing
-      changed_when: true
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
 
   always:
 
@@ -28,21 +33,21 @@
       ansible.builtin.file:
         path: /tmp/common_packages_done.log
         state: touch
-
-  become: true
-  tags:
-    - packages
+        mode: '0644'
 
 
 - name: Create system users
+  become: true
+  tags:
+    - users
   block:
 
     - name: Ensure devops user exists
       ansible.builtin.user:
-        name: "{{ devops_user }}"
+        name: "{{ common_devops_user }}"
         shell: /bin/bash
         groups: sudo
-        append: yes
+        append: true
         state: present
 
   always:
@@ -51,7 +56,4 @@
       ansible.builtin.file:
         path: /tmp/common_users_done.log
         state: touch
-
-  become: true
-  tags:
-    - users
+        mode: '0644'

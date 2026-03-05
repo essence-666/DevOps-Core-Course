@@ -9,6 +9,6 @@ common_packages:
   - gnupg
   - lsb-release
 
-timezone: "UTC"
+common_timezone: "UTC"
 
-devops_user: devops
+common_devops_user: devops
