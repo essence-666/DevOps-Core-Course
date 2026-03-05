@@ -41,7 +41,7 @@ web-1 | SUCCESS => {
 The project uses a modular role-based structure with three main roles:
 - `common` - Base system configuration
 - `docker` - Docker installation and setup  
-- `app_deploy` - Application deployment and container management
+- `web_app` - Application deployment and container management
 
 **Why roles instead of monolithic playbooks?**
 Roles enable code reuse, improve maintainability through separation of concerns, and allow for easier testing and collaboration. They provide a standardized structure that makes playbooks more readable and scalable.
@@ -80,7 +80,7 @@ Roles enable code reuse, improve maintainability through separation of concerns,
 **Dependencies:**
 - `common` (implicitly required for package management)
 
-### Role: app_deploy
+### Role: web_app
 
 **Purpose:** Deploys the application by pulling from Docker Hub, running containers, and performing health checks.
 
