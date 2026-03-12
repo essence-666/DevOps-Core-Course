@@ -1,0 +1,5 @@
+{"client_ip":"172.22.0.1:42812","duration_ms":0,"level":"INFO","method":"GET","path":"/","service":"devops-go","status_code":200,"timestamp":"2026-03-12T15:17:58Z"}
+{"client_ip":"172.22.0.1:42824","duration_ms":0,"level":"INFO","method":"GET","path":"/","service":"devops-go","status_code":200,"timestamp":"2026-03-12T15:17:58Z"}
+{"client_ip":"172.22.0.1:42836","duration_ms":0,"level":"INFO","method":"GET","path":"/","service":"devops-go","status_code":200,"timestamp":"2026-03-12T15:17:58Z"}
+{"client_ip":"172.22.0.1:42840","duration_ms":0,"level":"INFO","method":"GET","path":"/","service":"devops-go","status_code":200,"timestamp":"2026-03-12T15:17:58Z"}
+{"client_ip":"172.22.0.1:42846","duration_ms":0,"level":"INFO","method":"GET","path":"/","service":"devops-go","status_code":200,"timestamp":"2026-03-12T15:17:58Z"}

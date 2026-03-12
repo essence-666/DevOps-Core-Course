@@ -20,5 +20,5 @@ RUN chown appuser:appgroup /app/app
 
 USER appuser
 
-EXPOSE 5000
+EXPOSE 8001
 CMD ["./app"]

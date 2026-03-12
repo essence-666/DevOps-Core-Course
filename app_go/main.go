@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"time"
-	"fmt"
 )
 
 var startTime = time.Now()
@@ -20,11 +21,11 @@ type Service struct {
 }
 
 type System struct {
-	Hostname        string `json:"hostname"`
-	Platform        string `json:"platform"`
-	Architecture    string `json:"architecture"`
-	CPUCount        int    `json:"cpu_count"`
-	GoVersion       string `json:"go_version"`
+	Hostname     string `json:"hostname"`
+	Platform     string `json:"platform"`
+	Architecture string `json:"architecture"`
+	CPUCount     int    `json:"cpu_count"`
+	GoVersion    string `json:"go_version"`
 }
 
 type RuntimeInfo struct {
@@ -61,12 +62,64 @@ type HealthResponse struct {
 	UptimeSeconds int64  `json:"uptime_seconds"`
 }
 
+type ErrorResponse struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
 // Helpers
 func humanDuration(d time.Duration) string {
 	h := int(d.Hours())
 	m := int(d.Minutes()) % 60
 	s := int(d.Seconds()) % 60
 	return fmt.Sprintf("%d hour(s), %d minute(s), %d second(s)", h, m, s)
+}
+
+// Logging middleware for JSON structured logging
+func loggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Wrap response writer to capture status code
+		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		// Call the next handler
+		next(wrapped, r)
+
+		// Determine log level based on status code
+		level := "INFO"
+		if wrapped.statusCode >= 500 {
+			level = "ERROR"
+		} else if wrapped.statusCode >= 400 {
+			level = "WARNING"
+		}
+
+		// Log the request in JSON format
+		duration := time.Since(start)
+		logEntry := map[string]interface{}{
+			"timestamp":   time.Now().UTC().Format(time.RFC3339),
+			"level":       level,
+			"service":     "devops-go",
+			"method":      r.Method,
+			"path":        r.URL.Path,
+			"status_code": wrapped.statusCode,
+			"duration_ms": duration.Milliseconds(),
+			"client_ip":   r.RemoteAddr,
+		}
+
+		jsonLog, _ := json.Marshal(logEntry)
+		fmt.Println(string(jsonLog))
+	}
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 // Handlers
@@ -103,6 +156,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		Endpoints: []Endpoint{
 			{Path: "/", Method: "GET", Description: "Service information"},
 			{Path: "/health", Method: "GET", Description: "Health check"},
+			{Path: "/error", Method: "GET", Description: "Test endpoint that returns 500 error"},
 		},
 	}
 
@@ -124,6 +178,16 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+func errorHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	resp := ErrorResponse{
+		Error:   "Internal Server Error",
+		Message: "Test endpoint triggered - for error logging testing",
+	}
+	json.NewEncoder(w).Encode(resp)
+}
+
 // Utility
 func getHostname() string {
 	name, err := os.Hostname()
@@ -142,15 +206,28 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "5000"
+		port = "8001"
 	}
 
-	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/health", healthHandler)
+	// Register handlers with logging middleware
+	http.HandleFunc("/", loggingMiddleware(rootHandler))
+	http.HandleFunc("/health", loggingMiddleware(healthHandler))
+	http.HandleFunc("/error", loggingMiddleware(errorHandler))
 
-	fmt.Printf("Starting server at %s:%s...\n", host, port)
+	// Log startup in JSON format
+	startupLog := map[string]interface{}{
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+		"level":     "INFO",
+		"service":   "devops-go",
+		"message":   "Starting server",
+		"host":      host,
+		"port":      port,
+	}
+	jsonLog, _ := json.Marshal(startupLog)
+	fmt.Println(string(jsonLog))
+
 	err := http.ListenAndServe(host+":"+port, nil)
 	if err != nil {
-		fmt.Printf("Server error: %v\n", err)
+		log.Printf("Server error: %v\n", err)
 	}
 }

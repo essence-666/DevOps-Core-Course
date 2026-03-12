@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from datetime import datetime, timezone
 
 from core.config import (
@@ -39,5 +39,12 @@ async def root(request: Request):
         "endpoints": [
             {"path": "/", "method": "GET", "description": "Service information"},
             {"path": "/health", "method": "GET", "description": "Health check"},
+            {"path": "/error", "method": "GET", "description": "Test endpoint that returns 500 error"},
         ],
     }
+
+
+@router.get("/error")
+async def error_test():
+    """Test endpoint that returns a 500 error for testing error logging"""
+    raise HTTPException(status_code=500, detail="Internal Server Error - Test endpoint triggered")
