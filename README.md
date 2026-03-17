@@ -1,3 +1,6 @@
+![CI](https://github.com/essence-666/DevOps-Core-Course/actions/workflows/python-ci.yml/badge.svg)
+
+
 # DevOps Engineering: Core Practices
 
 [![Labs](https://img.shields.io/badge/Labs-18-blue)](#labs)

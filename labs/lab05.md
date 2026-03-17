@@ -94,7 +94,7 @@ ansible/
 │   │   │   └── main.yml
 │   │   └── defaults/
 │   │       └── main.yml
-│   └── app_deploy/            # Application deployment
+│   └── web_app/            # Application deployment
 │       ├── tasks/
 │       │   └── main.yml
 │       ├── handlers/
@@ -523,7 +523,7 @@ vault_password_file = .vault_pass
 
 #### 3.2 Create Application Deployment Role
 
-Create `roles/app_deploy/tasks/main.yml`:
+Create `roles/web_app/tasks/main.yml`:
 
 **Required Tasks:**
 1. Log in to Docker Hub (using vaulted credentials)
@@ -538,10 +538,10 @@ Create `roles/app_deploy/tasks/main.yml`:
 6. Wait for application to be ready (port check)
 7. Verify health endpoint
 
-**Create `roles/app_deploy/handlers/main.yml`:**
+**Create `roles/web_app/handlers/main.yml`:**
 - Handler to restart application container
 
-**Create `roles/app_deploy/defaults/main.yml`:**
+**Create `roles/web_app/defaults/main.yml`:**
 - Default port
 - Default restart policy
 - Default environment variables
@@ -611,7 +611,7 @@ Create `playbooks/deploy.yml`:
   become: yes
 
   roles:
-    - app_deploy
+    - web_app
 ```
 
 #### 3.4 Run Deployment
@@ -652,7 +652,7 @@ Create `ansible/docs/LAB05.md` with these sections:
 
 #### 2. Roles Documentation
 
-For each role (common, docker, app_deploy):
+For each role (common, docker, web_app):
 - **Purpose**: What does this role do?
 - **Variables**: Key variables and defaults
 - **Handlers**: What handlers are defined?
@@ -856,7 +856,7 @@ Ansible has official plugins for major clouds.
 
 **Setup & Structure (2 pts):**
 - [ ] Proper role-based directory structure created
-- [ ] All three roles created (common, docker, app_deploy)
+- [ ] All three roles created (common, docker, web_app)
 - [ ] Each role has appropriate tasks, handlers, and defaults
 - [ ] Ansible.cfg configured correctly
 - [ ] Inventory configured and connectivity tested

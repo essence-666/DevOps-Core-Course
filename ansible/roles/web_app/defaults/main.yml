@@ -1,0 +1,7 @@
+---
+restart_policy: unless-stopped
+app_env: {}
+
+# Wipe Logic Control
+# Set to true to remove application completely
+web_app_wipe: false

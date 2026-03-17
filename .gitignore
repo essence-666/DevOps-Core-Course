@@ -1,1 +1,7 @@
 test
+key.json
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+.history/
