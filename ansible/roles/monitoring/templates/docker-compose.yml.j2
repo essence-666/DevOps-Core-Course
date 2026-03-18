@@ -11,11 +11,11 @@ volumes:
 
 services:
   loki:
-    image: grafana/loki:3.0.0
+    image: grafana/loki:{{ loki_version }}
     ports:
-      - "3100:3100"
+      - "{{ loki_port }}:{{ loki_port }}"
     volumes:
-      - ./loki/config.yml:/etc/loki/config.yml
+      - {{ monitoring_dir }}/loki/config.yml:/etc/loki/config.yml
       - loki-data:/loki
     command: -config.file=/etc/loki/config.yml
     networks:
@@ -25,22 +25,19 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:{{ loki_port }}/ready || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
   promtail:
-    image: grafana/promtail:3.0.0
+    image: grafana/promtail:{{ promtail_version }}
     ports:
-      - "9080:9080"
+      - "{{ promtail_port }}:{{ promtail_port }}"
     volumes:
-      - ./promtail/config.yml:/etc/promtail/config.yml
+      - {{ monitoring_dir }}/promtail/config.yml:/etc/promtail/config.yml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: -config.file=/etc/promtail/config.yml
@@ -53,21 +50,18 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
 
   prometheus:
-    image: prom/prometheus:v3.9.0
+    image: prom/prometheus:v{{ prometheus_version }}
     ports:
-      - "9090:9090"
+      - "{{ prometheus_port }}:{{ prometheus_port }}"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - {{ monitoring_dir }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=15d'
-      - '--storage.tsdb.retention.size=10GB'
+      - '--storage.tsdb.retention.time={{ prometheus_retention_days }}d'
+      - '--storage.tsdb.retention.size={{ prometheus_retention_size }}'
     networks:
       - logging
     deploy:
@@ -75,28 +69,26 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:{{ prometheus_port }}/-/healthy || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
 
   grafana:
-    image: grafana/grafana:12.3.1
+    image: grafana/grafana:{{ grafana_version }}
     ports:
-      - "3000:3000"
+      - "{{ grafana_port }}:{{ grafana_port }}"
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - {{ monitoring_dir }}/grafana/provisioning:/etc/grafana/provisioning
+      - {{ monitoring_dir }}/grafana/dashboards:/var/lib/grafana/dashboards
     networks:
       - logging
-    env_file:
-      - .env
+    environment:
+      GF_SECURITY_ADMIN_USER: "{{ grafana_admin_user }}"
+      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
     depends_on:
       - prometheus
       - loki
@@ -105,20 +97,15 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:{{ grafana_port }}/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
   app-python:
-    build:
-      context: ../app_python
-      dockerfile: Dockerfile
+    image: "{{ app_python_image | default('app-python:latest') }}"
     ports:
       - "8000:8000"
     networks:
@@ -131,37 +118,8 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  app-go:
-    build:
-      context: ../app_go
-      dockerfile: Dockerfile
-    ports:
-      - "8001:8001"
-    networks:
-      - logging
-    labels:
-      logging: "promtail"
-      app: "devops-go"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

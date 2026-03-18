@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
 from datetime import datetime, timezone
+import time
 
 from core.config import (
     SERVICE_NAME,
@@ -7,6 +8,7 @@ from core.config import (
     SERVICE_DESCRIPTION,
     FRAMEWORK,
 )
+from core.metrics import endpoint_calls, system_info_duration
 from services.system import get_system_info
 from services.runtime import get_uptime
 
@@ -14,7 +16,12 @@ router = APIRouter()
 
 @router.get("/")
 async def root(request: Request):
+    endpoint_calls.labels(endpoint="/").inc()
     uptime_seconds, uptime_human = get_uptime()
+
+    t0 = time.time()
+    sys_info = get_system_info()
+    system_info_duration.observe(time.time() - t0)
 
     return {
         "service": {
@@ -23,7 +30,7 @@ async def root(request: Request):
             "description": SERVICE_DESCRIPTION,
             "framework": FRAMEWORK,
         },
-        "system": get_system_info(),
+        "system": sys_info,
         "runtime": {
             "uptime_seconds": uptime_seconds,
             "uptime_human": uptime_human,
@@ -47,4 +54,5 @@ async def root(request: Request):
 @router.get("/error")
 async def error_test():
     """Test endpoint that returns a 500 error for testing error logging"""
+    endpoint_calls.labels(endpoint="/error").inc()
     raise HTTPException(status_code=500, detail="Internal Server Error - Test endpoint triggered")
