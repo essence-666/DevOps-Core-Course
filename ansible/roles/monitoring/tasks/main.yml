@@ -1,0 +1,69 @@
+---
+- name: Create monitoring directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ monitoring_dir }}"
+    - "{{ monitoring_dir }}/loki"
+    - "{{ monitoring_dir }}/promtail"
+    - "{{ monitoring_dir }}/prometheus"
+    - "{{ monitoring_dir }}/grafana/provisioning/datasources"
+    - "{{ monitoring_dir }}/grafana/provisioning/dashboards"
+    - "{{ monitoring_dir }}/grafana/dashboards"
+
+- name: Copy Loki config
+  copy:
+    src: loki-config.yml
+    dest: "{{ monitoring_dir }}/loki/config.yml"
+    mode: '0644'
+
+- name: Copy Promtail config
+  copy:
+    src: promtail-config.yml
+    dest: "{{ monitoring_dir }}/promtail/config.yml"
+    mode: '0644'
+
+- name: Template Prometheus config
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
+    mode: '0644'
+  notify: reload prometheus
+
+- name: Copy Grafana datasource provisioning (Prometheus)
+  copy:
+    src: grafana-datasource-prometheus.yml
+    dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/prometheus.yml"
+    mode: '0644'
+
+- name: Copy Grafana datasource provisioning (Loki)
+  copy:
+    src: grafana-datasource-loki.yml
+    dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/loki.yml"
+    mode: '0644'
+
+- name: Copy Grafana dashboard provisioning config
+  copy:
+    src: grafana-dashboards-provisioning.yml
+    dest: "{{ monitoring_dir }}/grafana/provisioning/dashboards/dashboards.yml"
+    mode: '0644'
+
+- name: Copy Grafana app metrics dashboard
+  copy:
+    src: grafana-app-dashboard.json
+    dest: "{{ monitoring_dir }}/grafana/dashboards/app-metrics.json"
+    mode: '0644'
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_dir }}/docker-compose.yml"
+    mode: '0644'
+
+- name: Deploy monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_dir }}"
+    state: present
+    pull: always

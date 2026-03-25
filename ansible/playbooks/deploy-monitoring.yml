@@ -1,0 +1,7 @@
+---
+- name: Deploy full observability stack (Loki + Prometheus + Grafana)
+  hosts: all
+  become: true
+  roles:
+    - role: docker
+    - role: monitoring
