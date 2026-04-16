@@ -19,6 +19,7 @@ COPY services ./services
 COPY app.py .
 
 RUN chown -R appuser:appgroup /app
+RUN mkdir -p /data && chown appuser:appgroup /data
 
 USER appuser
 

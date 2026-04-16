@@ -58,3 +58,17 @@ vault:
 
 environment: "development"
 logLevel: "info"
+
+configmap:
+  appName: "devops-info-service"
+  environment: "development"
+  featureFlags:
+    enableMetrics: true
+    enableDebugLogging: false
+    enableRateLimit: false
+
+persistence:
+  enabled: true
+  size: 100Mi
+  storageClass: ""
+  visitsFile: "/data/visits"

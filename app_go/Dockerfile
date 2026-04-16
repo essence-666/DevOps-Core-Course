@@ -17,6 +17,7 @@ WORKDIR /app
 COPY --from=builder /app/app .
 
 RUN chown appuser:appgroup /app/app
+RUN mkdir -p /data && chown appuser:appgroup /data
 
 USER appuser
 

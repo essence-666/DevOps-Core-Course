@@ -6,11 +6,20 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
 )
 
 var startTime = time.Now()
+
+var (
+	visitsMu       sync.Mutex
+	visitsFilePath string
+)
 
 // Structs for JSON response
 type Service struct {
@@ -53,6 +62,7 @@ type MainResponse struct {
 	System    System      `json:"system"`
 	Runtime   RuntimeInfo `json:"runtime"`
 	Request   RequestInfo `json:"request"`
+	Visits    int64       `json:"visits"`
 	Endpoints []Endpoint  `json:"endpoints"`
 }
 
@@ -62,9 +72,40 @@ type HealthResponse struct {
 	UptimeSeconds int64  `json:"uptime_seconds"`
 }
 
+type VisitsResponse struct {
+	Visits int64 `json:"visits"`
+}
+
 type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`
+}
+
+// Visit counter helpers
+
+func getVisits() int64 {
+	data, err := os.ReadFile(visitsFilePath)
+	if err != nil {
+		return 0
+	}
+	count, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
+func incrementVisits() int64 {
+	visitsMu.Lock()
+	defer visitsMu.Unlock()
+	count := getVisits() + 1
+	if err := os.MkdirAll(filepath.Dir(visitsFilePath), 0755); err == nil {
+		tmp := visitsFilePath + ".tmp"
+		if err := os.WriteFile(tmp, []byte(strconv.FormatInt(count, 10)), 0644); err == nil {
+			os.Rename(tmp, visitsFilePath)
+		}
+	}
+	return count
 }
 
 // Helpers
@@ -80,13 +121,9 @@ func loggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		// Wrap response writer to capture status code
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-
-		// Call the next handler
 		next(wrapped, r)
 
-		// Determine log level based on status code
 		level := "INFO"
 		if wrapped.statusCode >= 500 {
 			level = "ERROR"
@@ -94,7 +131,6 @@ func loggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			level = "WARNING"
 		}
 
-		// Log the request in JSON format
 		duration := time.Since(start)
 		logEntry := map[string]interface{}{
 			"timestamp":   time.Now().UTC().Format(time.RFC3339),
@@ -126,6 +162,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	uptime := now.Sub(startTime)
+	visits := incrementVisits()
 
 	resp := MainResponse{
 		Service: Service{
@@ -153,9 +190,11 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 			Method:    r.Method,
 			Path:      r.URL.Path,
 		},
+		Visits: visits,
 		Endpoints: []Endpoint{
 			{Path: "/", Method: "GET", Description: "Service information"},
 			{Path: "/health", Method: "GET", Description: "Health check"},
+			{Path: "/visits", Method: "GET", Description: "Visit counter"},
 			{Path: "/error", Method: "GET", Description: "Test endpoint that returns 500 error"},
 		},
 	}
@@ -174,6 +213,12 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		UptimeSeconds: int64(uptime.Seconds()),
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func visitsHandler(w http.ResponseWriter, r *http.Request) {
+	resp := VisitsResponse{Visits: getVisits()}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
@@ -199,6 +244,11 @@ func getHostname() string {
 
 // Main
 func main() {
+	visitsFilePath = os.Getenv("VISITS_FILE")
+	if visitsFilePath == "" {
+		visitsFilePath = "/data/visits"
+	}
+
 	host := os.Getenv("HOST")
 	if host == "" {
 		host = "0.0.0.0"
@@ -209,19 +259,19 @@ func main() {
 		port = "8001"
 	}
 
-	// Register handlers with logging middleware
 	http.HandleFunc("/", loggingMiddleware(rootHandler))
 	http.HandleFunc("/health", loggingMiddleware(healthHandler))
+	http.HandleFunc("/visits", loggingMiddleware(visitsHandler))
 	http.HandleFunc("/error", loggingMiddleware(errorHandler))
 
-	// Log startup in JSON format
 	startupLog := map[string]interface{}{
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-		"level":     "INFO",
-		"service":   "devops-go",
-		"message":   "Starting server",
-		"host":      host,
-		"port":      port,
+		"timestamp":   time.Now().UTC().Format(time.RFC3339),
+		"level":       "INFO",
+		"service":     "devops-go",
+		"message":     "Starting server",
+		"host":        host,
+		"port":        port,
+		"visits_file": visitsFilePath,
 	}
 	jsonLog, _ := json.Marshal(startupLog)
 	fmt.Println(string(jsonLog))

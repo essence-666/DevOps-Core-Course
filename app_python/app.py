@@ -1,17 +1,16 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, Response
 import time
 
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-
-from core.config import SERVICE_NAME, SERVICE_VERSION, SERVICE_DESCRIPTION, HOST, PORT
+from api.routes import health, root, visits
+from core.config import HOST, PORT, SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION
 from core.logging import setup_logging
 from core.metrics import (
-    http_requests_total,
     http_request_duration_seconds,
     http_requests_in_progress,
+    http_requests_total,
 )
-from api.routes import root, health
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 logger = setup_logging()
 
@@ -20,6 +19,7 @@ app = FastAPI(
     version=SERVICE_VERSION,
     description=SERVICE_DESCRIPTION,
 )
+
 
 # Add request logging and metrics middleware
 @app.middleware("http")
@@ -41,7 +41,7 @@ async def log_requests(request: Request, call_next):
             "path": endpoint,
             "client_ip": request.client.host,
             "user_agent": request.headers.get("user-agent"),
-        }
+        },
     )
 
     response = await call_next(request)
@@ -81,8 +81,11 @@ async def log_requests(request: Request, call_next):
 async def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
+
 app.include_router(root.router)
 app.include_router(health.router)
+app.include_router(visits.router)
+
 
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
@@ -92,12 +95,13 @@ async def not_found(request: Request, exc):
             "method": request.method,
             "path": request.url.path,
             "client_ip": request.client.host,
-        }
+        },
     )
     return JSONResponse(
         status_code=404,
         content={"error": "Not Found", "message": "Endpoint does not exist"},
     )
+
 
 @app.exception_handler(Exception)
 async def internal_error(request: Request, exc):
@@ -107,14 +111,19 @@ async def internal_error(request: Request, exc):
             "method": request.method,
             "path": request.url.path,
             "client_ip": request.client.host,
-        }
+        },
     )
     return JSONResponse(
         status_code=500,
-        content={"error": "Internal Server Error", "message": "An unexpected error occurred"},
+        content={
+            "error": "Internal Server Error",
+            "message": "An unexpected error occurred",
+        },
     )
+
 
 if __name__ == "__main__":
     import uvicorn
+
     logger.info("Starting devops-info-service")
     uvicorn.run("app:app", host=HOST, port=PORT)
