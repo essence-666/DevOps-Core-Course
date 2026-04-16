@@ -45,3 +45,16 @@ readinessProbe:
 
 nameOverride: ""
 fullnameOverride: ""
+
+secrets:
+  secretKey: "change-me-secret-key"
+  databasePassword: "change-me-db-password"
+
+vault:
+  enabled: false
+  role: "app-go"
+  secretPath: "secret/data/app-go/config"
+  templateFormat: "env"
+
+environment: "development"
+logLevel: "info"
