@@ -1,0 +1,19 @@
+{
+  "appName": "devops-info-service-go",
+  "version": "1.0.0",
+  "environment": "development",
+  "featureFlags": {
+    "enableDebugLogging": false,
+    "enableRateLimit": false
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "readTimeoutSeconds": 30,
+    "writeTimeoutSeconds": 30
+  },
+  "logging": {
+    "level": "info",
+    "format": "json"
+  }
+}

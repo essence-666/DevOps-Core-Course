@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8001"
+      VISITS_FILE: "/data/visits"
+    volumes:
+      - visits_data:/data
+
+volumes:
+  visits_data:
+    driver: local

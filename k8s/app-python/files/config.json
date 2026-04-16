@@ -1,0 +1,20 @@
+{
+  "appName": "devops-info-service",
+  "version": "1.0.0",
+  "environment": "development",
+  "featureFlags": {
+    "enableMetrics": true,
+    "enableDebugLogging": false,
+    "enableRateLimit": false
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "readTimeoutSeconds": 30,
+    "writeTimeoutSeconds": 30
+  },
+  "logging": {
+    "level": "info",
+    "format": "json"
+  }
+}

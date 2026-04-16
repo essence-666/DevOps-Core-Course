@@ -122,3 +122,47 @@ docker run -p 8000:8000 \
   -e PORT=8000 \
   devops-info-service
 ```
+
+## Visit Counter
+
+The service tracks the number of visits to the root endpoint (`/`). The counter is persisted to a file so it survives container restarts.
+
+### Endpoints
+
+| Endpoint  | Method | Description                          |
+|-----------|--------|--------------------------------------|
+| `/`       | GET    | Service info (increments visit count) |
+| `/visits` | GET    | Returns current visit count          |
+
+### Configuration
+
+| Environment Variable | Default         | Description                     |
+|----------------------|-----------------|---------------------------------|
+| `VISITS_FILE`        | `/data/visits`  | Path to the visit counter file  |
+
+### Local Testing with Docker Compose
+
+```bash
+# Start the service
+docker compose up -d
+
+# Access root endpoint a few times (increments counter)
+curl http://localhost:8000/
+curl http://localhost:8000/
+curl http://localhost:8000/
+
+# Check visit count
+curl http://localhost:8000/visits
+# {"visits": 3}
+
+# Restart container — counter persists
+docker compose restart
+curl http://localhost:8000/visits
+# {"visits": 3}
+
+# Stop and remove containers (volume persists)
+docker compose down
+docker compose up -d
+curl http://localhost:8000/visits
+# {"visits": 3}
+```

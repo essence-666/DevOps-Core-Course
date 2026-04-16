@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Request, HTTPException
-from datetime import datetime, timezone
 import time
+from datetime import datetime, timezone
 
 from core.config import (
+    FRAMEWORK,
+    SERVICE_DESCRIPTION,
     SERVICE_NAME,
     SERVICE_VERSION,
-    SERVICE_DESCRIPTION,
-    FRAMEWORK,
 )
 from core.metrics import endpoint_calls, system_info_duration
-from services.system import get_system_info
+from fastapi import APIRouter, HTTPException, Request
 from services.runtime import get_uptime
+from services.system import get_system_info
+from services.visits import increment_visits
 
 router = APIRouter()
+
 
 @router.get("/")
 async def root(request: Request):
     endpoint_calls.labels(endpoint="/").inc()
+    visits = increment_visits()
     uptime_seconds, uptime_human = get_uptime()
 
     t0 = time.time()
@@ -43,10 +46,16 @@ async def root(request: Request):
             "method": request.method,
             "path": request.url.path,
         },
+        "visits": visits,
         "endpoints": [
             {"path": "/", "method": "GET", "description": "Service information"},
             {"path": "/health", "method": "GET", "description": "Health check"},
-            {"path": "/error", "method": "GET", "description": "Test endpoint that returns 500 error"},
+            {"path": "/visits", "method": "GET", "description": "Visit counter"},
+            {
+                "path": "/error",
+                "method": "GET",
+                "description": "Test endpoint that returns 500 error",
+            },
         ],
     }
 
@@ -55,4 +64,6 @@ async def root(request: Request):
 async def error_test():
     """Test endpoint that returns a 500 error for testing error logging"""
     endpoint_calls.labels(endpoint="/error").inc()
-    raise HTTPException(status_code=500, detail="Internal Server Error - Test endpoint triggered")
+    raise HTTPException(
+        status_code=500, detail="Internal Server Error - Test endpoint triggered"
+    )
