@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: python-app
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: python-app
+    app.kubernetes.io/part-of: devops-core-course
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/essence-666/DevOps-Core-Course.git
+    targetRevision: master
+    path: k8s/app-python
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  # Manual sync — operator must trigger sync explicitly via UI or CLI.
+  # No `automated` block means ArgoCD will detect drift but not apply it automatically.
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
