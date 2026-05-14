@@ -17,6 +17,18 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      {{- if .Values.initContainers.enabled }}
+      initContainers:
+        - name: init-download
+          image: busybox:1.36
+          command: ['sh', '-c', 'wget -O /work-dir/index.html https://example.com && echo "Download complete"']
+          volumeMounts:
+            - name: workdir
+              mountPath: /work-dir
+        - name: wait-for-service
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nslookup {{ include "app-python.fullname" . }}; do echo "Waiting for service..."; sleep 2; done; echo "Service is ready"']
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -38,6 +50,11 @@ spec:
             - name: data-volume
               mountPath: /data
             {{- end }}
+            {{- if .Values.initContainers.enabled }}
+            - name: workdir
+              mountPath: /init-data
+              readOnly: true
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
@@ -52,6 +69,10 @@ spec:
         - name: data-volume
           persistentVolumeClaim:
             claimName: {{ include "app-python.fullname" . }}-data
+        {{- end }}
+        {{- if .Values.initContainers.enabled }}
+        - name: workdir
+          emptyDir: {}
         {{- end }}
   strategy:
     {{- if eq .Values.rollout.strategy "canary" }}

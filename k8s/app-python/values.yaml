@@ -94,3 +94,17 @@ rollout:
     autoPromotionSeconds: null
   analysis:
     enabled: false
+
+statefulset:
+  enabled: false
+  updateStrategy:
+    type: RollingUpdate  # RollingUpdate or OnDelete
+    partition: 0         # Only pods with ordinal >= partition are updated (RollingUpdate only)
+
+initContainers:
+  enabled: false  # Set true to enable init container patterns
+
+serviceMonitor:
+  enabled: false  # Set true when kube-prometheus-stack is installed
+  interval: 30s
+  path: /metrics
