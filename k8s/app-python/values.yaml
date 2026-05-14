@@ -73,6 +73,12 @@ persistence:
   storageClass: ""
   visitsFile: "/data/visits"
 
+statefulset:
+  enabled: false
+  updateStrategy:
+    type: RollingUpdate  # RollingUpdate or OnDelete
+    partition: 0         # Only pods with ordinal >= partition are updated (RollingUpdate only)
+
 rollout:
   enabled: true
   strategy: canary  # canary or blueGreen
